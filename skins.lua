@@ -104,8 +104,13 @@ local function set_meta_for_category(player, cat, actual_cat,
                comps_idx = 2
                color_idx = math.random(6, 9)
             elseif heat > 60 and heat <= 75 then
-               comps_idx = 1
-               color_idx = math.random(7, 9)
+               if math.random(2) == 2 then
+                  comps_idx = 1
+                  color_idx = math.random(7, 9)
+               else
+                  comps_idx = 2
+                  color_idx = math.random(3, 6)
+               end
             elseif heat > 35 and heat <= 60 then
                comps_idx = 1
                color_idx = math.random(4, 7)
