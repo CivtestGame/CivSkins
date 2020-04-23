@@ -174,6 +174,9 @@ end
 
 function civskins.get_skin(pname)
    local player = minetest.get_player_by_name(pname)
+   if not player then
+      return "civskins_mbase_1.png"
+   end
 
    local meta = player:get_meta()
    local skin = merge_components({
