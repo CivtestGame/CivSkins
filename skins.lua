@@ -73,8 +73,9 @@ local pants_colors = {
    }
 }
 
-local function set_meta_for_category(player, cat, actual_cat,
-                                     chance, color_spec, idx)
+local function set_meta_for_category(player, cat, actual_cat, chance,
+                                     color_spec, comp_idx_override,
+                                     color_idx_override)
    local meta = player:get_meta()
 
    if chance and chance > math.random(100) then
@@ -88,13 +89,13 @@ local function set_meta_for_category(player, cat, actual_cat,
       return
    end
 
-   local comps_idx = idx or math.random(#comps)
+   local comps_idx = comp_idx_override or math.random(#comps)
    if color_spec then
       local colors = color_spec.colors
       local randbase = color_spec.random_base
       local randpeak = color_spec.random_peak
 
-      local color_idx = math.random(#colors)
+      local color_idx = color_idx_override or math.random(#colors)
       if color_spec.biome_weighting then
          local ppos = player:get_pos()
          local heat = minetest.get_heat(ppos)
@@ -125,7 +126,7 @@ local function set_meta_for_category(player, cat, actual_cat,
          .. ":" .. tostring(math.random(randbase, randpeak))
 
       meta:set_string("civskins_"..cat, "("..comps[comps_idx]..colorize..")")
-      return comps_idx
+      return comps_idx, color_idx
    else
       meta:set_string(
          "civskins_"..cat, comps[comps_idx]
@@ -148,6 +149,25 @@ function civskins.gen_male_skin(player)
    set_meta_for_category(player, "pants", nil, nil, pants_colors)
 end
 
+function civskins.gen_female_skin(player)
+   set_meta_for_category(player, "base", "fbase", nil, skin_colors)
+   -- set_meta_for_category(meta, "face")
+
+   -- since eye whites are constant, we should use the same whites and eyes
+   local eye_idx = set_meta_for_category(player, "eyewhites")
+   set_meta_for_category(player, "eyes", nil, nil, eye_colors, eye_idx)
+
+   local _, color_idx = set_meta_for_category(
+      player, "pants", nil, nil, pants_colors
+   )
+
+   set_meta_for_category(
+      player, "top", nil, nil, pants_colors, nil, color_idx
+   )
+
+   set_meta_for_category(player, "hair", "fhair", nil, hair_colors)
+end
+
 function civskins.has_skin(player)
    local meta = player:get_meta()
    return meta:get("civskins_base")
@@ -168,7 +188,7 @@ local function merge_components(components)
    return accum ~= "" and accum
 end
 
-local function get_component_for_category(meta, cat, actual_cat)
+local function get_component_for_category(meta, cat)
    return meta:get_string("civskins_"..cat)
 end
 
@@ -180,22 +200,31 @@ function civskins.get_skin(pname)
 
    local meta = player:get_meta()
    local skin = merge_components({
-         get_component_for_category(meta, "base", "mbase"),
-         get_component_for_category(meta, "hair"),
+         get_component_for_category(meta, "base"),
          -- get_component_for_category(meta, "face"),
          get_component_for_category(meta, "eyewhites"),
          get_component_for_category(meta, "eyes"),
+         get_component_for_category(meta, "top"),
          get_component_for_category(meta, "pants"),
+         get_component_for_category(meta, "hair"),
    })
    return skin
 end
 
-minetest.register_on_newplayer(function(player)
+function civskins.assign_skin(player)
+   if math.random(0, 1) == 1 then
+      civskins.gen_female_skin(player)
+   else
       civskins.gen_male_skin(player)
+   end
+end
+
+minetest.register_on_newplayer(function(player)
+      civskins.assign_skin(player)
 end)
 
 minetest.register_on_joinplayer(function(player)
       if not civskins.has_skin(player) then
-         civskins.gen_male_skin(player)
+         civskins.assign_skin(player)
       end
 end)
