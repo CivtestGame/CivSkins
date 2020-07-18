@@ -211,10 +211,25 @@ function civskins.get_skin(pname)
    return skin
 end
 
-function civskins.assign_skin(player)
-   if math.random(0, 1) == 1 then
+local function clear_skin(player)
+   local known_cats = {
+      "base", "eyewhites", "eyes", "top", "pants", "hair"
+   }
+
+   local meta = player:get_meta()
+   for _,cat in ipairs(known_cats) do
+      meta:set_string("civskins_"..cat, "")
+   end
+end
+
+function civskins.assign_skin(player, flag)
+   clear_skin(player)
+
+   local flag = flag or ({ "male", "female"})[math.random(1, 2)]
+
+   if flag == "female" then
       civskins.gen_female_skin(player)
-   else
+   elseif flag == "male" then
       civskins.gen_male_skin(player)
    end
 end
